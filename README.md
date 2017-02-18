@@ -1,2 +1,2 @@
-# neo-sdr
-Buildroot External for Udoo Neo Configuration w/ RTLSDR support.
+# neo-builds
+Buildroot External for Udoo Neo Configurations.
