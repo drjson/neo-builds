@@ -1,41 +1,8 @@
-From 76e691fc7653b85d390e58710e5c7db73ca49367 Mon Sep 17 00:00:00 2001
-From: Andreas Färber <afaerber@suse.de>
-Date: Sun, 16 Oct 2016 16:44:23 +0200
-Subject: ARM: dts: imx6sx: Add UDOO Neo support
-MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
-
-Add initial device trees for UDOO Neo Basic, Extended and Full boards:
-* Serial console is enabled, other serial ports are prepared.
-* I2C based PMIC is enabled.
-* Ethernet is enabled for Basic and Full.
-* SDHC is enabled, with the SDIO_PWR GPIO modeled as a regulator.
-* Both user LEDs are enabled, with the orange one reserved for the M4
-  and with the SD card as default trigger for the red LED.
-
-The decision on a board compatible string is deferred to later.
-
-Cc: Ettore Chimenti <ettore.chimenti@udoo.org>
-Signed-off-by: Andreas Färber <afaerber@suse.de>
-Signed-off-by: Shawn Guo <shawnguo@kernel.org>
----
- arch/arm/boot/dts/Makefile                     |   5 +-
- arch/arm/boot/dts/imx6sx-udoo-neo-basic.dts    |  69 ++++++
- arch/arm/boot/dts/imx6sx-udoo-neo-extended.dts |  54 +++++
- arch/arm/boot/dts/imx6sx-udoo-neo-full.dts     |  69 ++++++
- arch/arm/boot/dts/imx6sx-udoo-neo.dtsi         | 293 +++++++++++++++++++++++++
- 5 files changed, 489 insertions(+), 1 deletion(-)
- create mode 100644 arch/arm/boot/dts/imx6sx-udoo-neo-basic.dts
- create mode 100644 arch/arm/boot/dts/imx6sx-udoo-neo-extended.dts
- create mode 100644 arch/arm/boot/dts/imx6sx-udoo-neo-full.dts
- create mode 100644 arch/arm/boot/dts/imx6sx-udoo-neo.dtsi
-
 diff --git a/arch/arm/boot/dts/Makefile b/arch/arm/boot/dts/Makefile
-index 019976b..da0197d 100644
+index c558ba7..abaf1bb 100644
 --- a/arch/arm/boot/dts/Makefile
 +++ b/arch/arm/boot/dts/Makefile
-@@ -417,7 +417,10 @@ dtb-$(CONFIG_SOC_IMX6SX) += \
+@@ -416,7 +416,10 @@ dtb-$(CONFIG_SOC_IMX6SX) += \
  	imx6sx-sabreauto.dtb \
  	imx6sx-sdb-reva.dtb \
  	imx6sx-sdb-sai.dtb \
@@ -259,10 +226,10 @@ index 0000000..d8c3577
 +};
 diff --git a/arch/arm/boot/dts/imx6sx-udoo-neo.dtsi b/arch/arm/boot/dts/imx6sx-udoo-neo.dtsi
 new file mode 100644
-index 0000000..2b65d26
+index 0000000..20f11c9
 --- /dev/null
 +++ b/arch/arm/boot/dts/imx6sx-udoo-neo.dtsi
-@@ -0,0 +1,293 @@
+@@ -0,0 +1,378 @@
 +/*
 + * Copyright (c) 2016 Andreas Färber
 + *
@@ -314,6 +281,11 @@ index 0000000..2b65d26
 +		stdout-path = "serial0:115200n8";
 +	};
 +
++	aliases {
++		mmc0 = &usdhc2;
++                wlan = &usdhc3;
++	};
++
 +	leds {
 +		compatible = "gpio-leds";
 +
@@ -339,6 +311,35 @@ index 0000000..2b65d26
 +		regulator-min-microvolt = <3300000>;
 +		regulator-max-microvolt = <3300000>;
 +		regulator-boot-on;
++	};
++
++        wlan_en_reg: regulator-wlan-en {
++                compatible = "regulator-fixed";
++                regulator-name = "WLAN_EN";
++                regulator-min-microvolt = <1800000>;
++                regulator-max-microvolt = <1800000>;
++
++                /* WLAN_EN GPIO for this board - KEY_COL2  Bank2, pin12 */
++                gpio = <&gpio2 12 0>;
++                /* WLAN card specific delay */
++                startup-delay-us = <70000>;
++                enable-active-high;
++        };
++	
++        kim {
++	        compatible = "kim";
++	        nshutdown_gpio = <49>;  // GPIO2_17 The wl8 driver expects gpio to be an integer, so gpio2_17 is (2-1)*32+17=49
++	        dev_name = "/dev/ttymxc2";
++	        flow_cntrl = <1>;
++	        baud_rate = <921600>;
++	};
++
++	btwilink {
++	        compatible = "btwilink";
++	};
++
++	poweroff {
++		compatible = "udoo,poweroff";
 +	};
 +};
 +
@@ -488,6 +489,17 @@ index 0000000..2b65d26
 +			<MX6SX_PAD_GPIO1_IO07__UART2_RX		0x1b0b1>;
 +	};
 +
++        pinctrl_uart3: uart3grp {
++                fsl,pins = 
++                        <MX6SX_PAD_CSI_MCLK__OSC32K_32K_OUT	0x10059>,
++                        <MX6SX_PAD_SD3_DATA4__UART3_RX		0x13059>,
++                        <MX6SX_PAD_SD3_DATA5__UART3_TX		0x13059>,
++                        <MX6SX_PAD_SD3_DATA6__UART3_RTS_B	0x13059>,
++                        <MX6SX_PAD_SD3_DATA7__UART3_CTS_B	0x13059>,
++                        <MX6SX_PAD_KEY_ROW2__GPIO2_IO_17	0x15059>;
++                
++        };
++
 +	pinctrl_uart5: uart5grp {
 +		fsl,pins =
 +			<MX6SX_PAD_SD4_DATA4__UART5_RX		0x1b0b1>,
@@ -516,6 +528,18 @@ index 0000000..2b65d26
 +			<MX6SX_PAD_SD2_DATA3__USDHC2_DATA3	0x17059>,
 +			<MX6SX_PAD_SD1_DATA0__GPIO6_IO_2	0x17059>; /* CD */
 +	};
++
++        pinctrl_usdhc3_wifi: usdhc3grp-wifi {
++                fsl,pins = 
++                        <MX6SX_PAD_SD3_CMD__USDHC3_CMD		0x17069>,
++                        <MX6SX_PAD_SD3_CLK__USDHC3_CLK		0x10069>,
++                        <MX6SX_PAD_SD3_DATA0__USDHC3_DATA0	0x17069>,
++                        <MX6SX_PAD_SD3_DATA1__USDHC3_DATA1	0x17069>,
++                        <MX6SX_PAD_SD3_DATA2__USDHC3_DATA2	0x17069>,
++                        <MX6SX_PAD_SD3_DATA3__USDHC3_DATA3	0x17069>,
++                        <MX6SX_PAD_KEY_COL2__GPIO2_IO_12	0x15059>,
++                        <MX6SX_PAD_KEY_ROW1__GPIO2_IO_16	0x13059>;
++        };
 +};
 +
 +&uart1 {
@@ -529,6 +553,13 @@ index 0000000..2b65d26
 +	pinctrl-names = "default";
 +	pinctrl-0 = <&pinctrl_uart2>;
 +	status = "disabled";
++};
++
++&uart3 { /* for bluetooth */
++	pinctrl-names = "default";
++	pinctrl-0 = <&pinctrl_uart3>;
++	fsl,uart-has-rtscts;
++	status = "okay";
 +};
 +
 +/* Arduino serial */
@@ -556,5 +587,24 @@ index 0000000..2b65d26
 +	wakeup-source;
 +	status = "okay";
 +};
--- 
-cgit v0.12
++
++&usdhc3 { /* WiFi */
++	pinctrl-names = "default";
++	pinctrl-0 = <&pinctrl_usdhc3_wifi>;
++	enable-sdio-wakeup;
++	non-removable;	// non-removable is not a variable, the fact it is listed is all that is used by driver
++	vmmc-supply = <&wlan_en_reg>;
++	cap-power-off-card;
++	keep-power-in-suspend;
++	status = "okay";
++	#address-cells = <1>;
++	#size-cells = <0>;
++	wlcore: wlcore@0 {
++		compatible = "ti,wl1831";
++		reg = <2>;
++		interrupt-parent = <&gpio2>;
++		interrupts = <16 IRQ_TYPE_EDGE_RISING>;
++		ref-clock-frequency = <38400000>;
++		tcxo-clock-frequency = <26000000>;
++	};
++};
