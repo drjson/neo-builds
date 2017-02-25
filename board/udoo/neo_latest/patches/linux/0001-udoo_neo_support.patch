@@ -151,7 +151,7 @@ index 0000000..d6fdd17
 +};
 diff --git a/arch/arm/boot/dts/imx6sx-udoo-neo-full.dts b/arch/arm/boot/dts/imx6sx-udoo-neo-full.dts
 new file mode 100644
-index 0000000..d8c3577
+index 0000000..653ceb2
 --- /dev/null
 +++ b/arch/arm/boot/dts/imx6sx-udoo-neo-full.dts
 @@ -0,0 +1,69 @@
@@ -203,7 +203,7 @@ index 0000000..d8c3577
 +
 +/ {
 +	model = "UDOO Neo Full";
-+	compatible = "fsl,imx6sx";
++	compatible = "udoo,neofull", "fsl,imx6sx";
 +
 +	memory {
 +		reg = <0x80000000 0x40000000>;
@@ -226,10 +226,10 @@ index 0000000..d8c3577
 +};
 diff --git a/arch/arm/boot/dts/imx6sx-udoo-neo.dtsi b/arch/arm/boot/dts/imx6sx-udoo-neo.dtsi
 new file mode 100644
-index 0000000..20f11c9
+index 0000000..26eb688
 --- /dev/null
 +++ b/arch/arm/boot/dts/imx6sx-udoo-neo.dtsi
-@@ -0,0 +1,378 @@
+@@ -0,0 +1,508 @@
 +/*
 + * Copyright (c) 2016 Andreas Färber
 + *
@@ -281,11 +281,6 @@ index 0000000..20f11c9
 +		stdout-path = "serial0:115200n8";
 +	};
 +
-+	aliases {
-+		mmc0 = &usdhc2;
-+                wlan = &usdhc3;
-+	};
-+
 +	leds {
 +		compatible = "gpio-leds";
 +
@@ -313,34 +308,62 @@ index 0000000..20f11c9
 +		regulator-boot-on;
 +	};
 +
-+        wlan_en_reg: regulator-wlan-en {
-+                compatible = "regulator-fixed";
-+                regulator-name = "WLAN_EN";
-+                regulator-min-microvolt = <1800000>;
-+                regulator-max-microvolt = <1800000>;
-+
-+                /* WLAN_EN GPIO for this board - KEY_COL2  Bank2, pin12 */
-+                gpio = <&gpio2 12 0>;
-+                /* WLAN card specific delay */
-+                startup-delay-us = <70000>;
-+                enable-active-high;
-+        };
-+	
-+        kim {
-+	        compatible = "kim";
-+	        nshutdown_gpio = <49>;  // GPIO2_17 The wl8 driver expects gpio to be an integer, so gpio2_17 is (2-1)*32+17=49
-+	        dev_name = "/dev/ttymxc2";
-+	        flow_cntrl = <1>;
-+	        baud_rate = <921600>;
++	reg_usb_otg1_vbus: regulator-usb-otg1-vbus {
++		compatible = "regulator-fixed";
++		pinctrl-names = "default";
++		pinctrl-0 = <&pinctrl_otg1_reg>;
++		regulator-name = "usb_otg1_vbus";
++		regulator-min-microvolt = <5000000>;
++		regulator-max-microvolt = <5000000>;
++		gpio = <&gpio1 9 GPIO_ACTIVE_HIGH>;
++		enable-active-high;
 +	};
 +
-+	btwilink {
-+	        compatible = "btwilink";
++	reg_usb_otg2_vbus: regulator-usb-otg2-vbus {
++		compatible = "regulator-fixed";
++		pinctrl-names = "default";
++		pinctrl-0 = <&pinctrl_otg2_reg>;
++		regulator-name = "usb_otg2_vbus";
++		regulator-min-microvolt = <5000000>;
++		regulator-max-microvolt = <5000000>;
++		gpio = <&gpio4 12 GPIO_ACTIVE_HIGH>;
++		enable-active-high;
 +	};
 +
-+	poweroff {
-+		compatible = "udoo,poweroff";
++	reg_wlan: regulator-wlan {
++		compatible = "regulator-fixed";
++		regulator-name = "wlan-en-regulator";
++		regulator-min-microvolt = <1800000>;
++		regulator-max-microvolt = <1800000>;
++		gpio = <&gpio2 12 GPIO_ACTIVE_HIGH>;
++		startup-delay-us = <70000>;
++		enable-active-high;
 +	};
++
++	reg_bt: regulator-bt {
++		compatible = "regulator-fixed";
++		pinctrl-names = "default";
++		pinctrl-0 = <&pinctrl_bt_reg>;
++		enable-active-high;
++		gpio = <&gpio2 17 GPIO_ACTIVE_HIGH>;
++		regulator-name = "bt_reg";
++		regulator-min-microvolt = <1800000>;
++		regulator-max-microvolt = <1800000>;
++		regulator-always-on;
++	}; 
++
++	//Disable kim, crashes 
++	//st_kim: kim {
++	//	compatible = "kim";
++	//	nshutdown_gpio = <49>;
++	//	dev_name = "/dev/ttymxc2";
++	//	flow_cntrl = <1>;
++	//	baud_rate = <115200>;
++	//};
++
++	//ti_bt: btwilink {
++	//	compatible = "btwilink";
++	//};
 +};
 +
 +&cpu0 {
@@ -352,6 +375,7 @@ index 0000000..20f11c9
 +	pinctrl-names = "default";
 +	pinctrl-0 = <&pinctrl_enet1>;
 +	phy-mode = "rmii";
++	phy-reset-duration = <10>;
 +	phy-reset-gpios = <&gpio2 1 GPIO_ACTIVE_LOW>;
 +};
 +
@@ -451,7 +475,59 @@ index 0000000..20f11c9
 +	};
 +};
 +
++&i2c2 { /* Bricks i2c */
++	clock-frequency = <100000>;
++	pinctrl-names = "default";
++	pinctrl-0 = <&pinctrl_i2c2>;
++	status = "okay";
++
++	barometer: mpl3115@60 {    // Brick Barometer Sensor
++		compatible = "fsl,mpl3115";
++		reg = <0x60>;
++		status = "okay";
++	};
++
++	lm75: lm75@48 {    // Brick Temperature Sensor
++		compatible = "national,lm75";
++		reg = <0x48>;
++		status = "okay";
++	};
++
++};
++
++
++&i2c3 { /* LCD to HDMI */
++	clock-frequency = <100000>;
++	pinctrl-names = "default";
++	pinctrl-0 = <&pinctrl_i2c3>;
++	status = "disabled";
++};
++
++&i2c4 { /* Acc/Gyro Mag Sensors */
++	clock-frequency = <100000>;
++	pinctrl-names = "default";
++	pinctrl-0 = <&pinctrl_i2c4>;
++	status= "okay";
++
++	accelerometer: fxos8700@1e {
++		compatible = "fsl,fxos8700";
++		reg = <0x1e>;
++		status = "okay";
++	};
++
++	gyroscope: fxas2100x@20 {
++		compatible = "fsl,fxas2100x";
++		reg = <0x20>;
++		status = "okay";
++	};
++};
++
 +&iomuxc {
++	pinctrl_bt_reg: btreggrp {
++		fsl,pins =
++			<MX6SX_PAD_KEY_ROW2__GPIO2_IO_17        0x15059>;
++	};
++
 +	pinctrl_enet1: enet1grp {
 +		fsl,pins =
 +			<MX6SX_PAD_ENET1_CRS__GPIO2_IO_1	0xa0b1>,
@@ -473,9 +549,27 @@ index 0000000..20f11c9
 +
 +	pinctrl_i2c1: i2c1grp {
 +		fsl,pins =
-+			<MX6SX_PAD_GPIO1_IO00__I2C1_SCL		0x4001b8b1>,
-+			<MX6SX_PAD_GPIO1_IO01__I2C1_SDA		0x4001b8b1>;
++			<MX6SX_PAD_GPIO1_IO00__I2C1_SCL 0x4001b8b1>,
++			<MX6SX_PAD_GPIO1_IO01__I2C1_SDA 0x4001b8b1>;
 +	};
++
++        pinctrl_i2c2: i2c2grp {
++                fsl,pins = 
++                        <MX6SX_PAD_GPIO1_IO03__I2C2_SDA 0x4001b8b1>,
++                        <MX6SX_PAD_GPIO1_IO02__I2C2_SCL 0x4001b8b1>;
++        };
++
++        pinctrl_i2c3: i2c3grp {
++                fsl,pins = 
++                        <MX6SX_PAD_KEY_ROW4__I2C3_SDA   0x4001b8b1>,
++                        <MX6SX_PAD_KEY_COL4__I2C3_SCL   0x4001b8b1>;
++        };
++
++        pinctrl_i2c4: i2c4grp {
++                fsl,pins = 
++                        <MX6SX_PAD_USB_H_DATA__I2C4_SDA	  0x4001b8b1>,
++                        <MX6SX_PAD_USB_H_STROBE__I2C4_SCL 0x4001b8b1>;
++        };
 +
 +	pinctrl_uart1: uart1grp {
 +		fsl,pins =
@@ -489,16 +583,13 @@ index 0000000..20f11c9
 +			<MX6SX_PAD_GPIO1_IO07__UART2_RX		0x1b0b1>;
 +	};
 +
-+        pinctrl_uart3: uart3grp {
-+                fsl,pins = 
-+                        <MX6SX_PAD_CSI_MCLK__OSC32K_32K_OUT	0x10059>,
-+                        <MX6SX_PAD_SD3_DATA4__UART3_RX		0x13059>,
-+                        <MX6SX_PAD_SD3_DATA5__UART3_TX		0x13059>,
-+                        <MX6SX_PAD_SD3_DATA6__UART3_RTS_B	0x13059>,
-+                        <MX6SX_PAD_SD3_DATA7__UART3_CTS_B	0x13059>,
-+                        <MX6SX_PAD_KEY_ROW2__GPIO2_IO_17	0x15059>;
-+                
-+        };
++	pinctrl_uart3: uart3grp {
++		fsl,pins =
++			<MX6SX_PAD_SD3_DATA4__UART3_RX          0x13059>,
++			<MX6SX_PAD_SD3_DATA5__UART3_TX          0x13059>,
++			<MX6SX_PAD_SD3_DATA6__UART3_RTS_B       0x13059>,
++			<MX6SX_PAD_SD3_DATA7__UART3_CTS_B       0x13059>;
++	};
 +
 +	pinctrl_uart5: uart5grp {
 +		fsl,pins =
@@ -518,6 +609,28 @@ index 0000000..20f11c9
 +			<MX6SX_PAD_CSI_DATA07__UART6_CTS_B	0x1b0b1>;
 +	};
 +
++	pinctrl_otg1_reg: otg1grp {
++		fsl,pins =
++			<MX6SX_PAD_GPIO1_IO09__GPIO1_IO_9        0x10b0>;
++	};
++
++
++	pinctrl_otg2_reg: otg2grp {
++		fsl,pins =
++			<MX6SX_PAD_NAND_RE_B__GPIO4_IO_12        0x10b0>;
++	};
++
++	pinctrl_usb_otg1: usbotg1grp {
++		fsl,pins =
++			<MX6SX_PAD_GPIO1_IO10__ANATOP_OTG1_ID    0x17059>,
++			<MX6SX_PAD_GPIO1_IO08__USB_OTG1_OC       0x10b0>;
++	};
++
++	pinctrl_usb_otg2: usbot2ggrp {
++		fsl,pins =
++			<MX6SX_PAD_QSPI1A_DATA0__USB_OTG2_OC     0x10b0>;
++	};
++
 +	pinctrl_usdhc2: usdhc2grp {
 +		fsl,pins =
 +			<MX6SX_PAD_SD2_CMD__USDHC2_CMD		0x17059>,
@@ -529,17 +642,18 @@ index 0000000..20f11c9
 +			<MX6SX_PAD_SD1_DATA0__GPIO6_IO_2	0x17059>; /* CD */
 +	};
 +
-+        pinctrl_usdhc3_wifi: usdhc3grp-wifi {
-+                fsl,pins = 
-+                        <MX6SX_PAD_SD3_CMD__USDHC3_CMD		0x17069>,
-+                        <MX6SX_PAD_SD3_CLK__USDHC3_CLK		0x10069>,
-+                        <MX6SX_PAD_SD3_DATA0__USDHC3_DATA0	0x17069>,
-+                        <MX6SX_PAD_SD3_DATA1__USDHC3_DATA1	0x17069>,
-+                        <MX6SX_PAD_SD3_DATA2__USDHC3_DATA2	0x17069>,
-+                        <MX6SX_PAD_SD3_DATA3__USDHC3_DATA3	0x17069>,
-+                        <MX6SX_PAD_KEY_COL2__GPIO2_IO_12	0x15059>,
-+                        <MX6SX_PAD_KEY_ROW1__GPIO2_IO_16	0x13059>;
-+        };
++	pinctrl_usdhc3: usdhc3grp {
++		fsl,pins =
++			<MX6SX_PAD_KEY_COL2__GPIO2_IO_12	0x15059>,
++			<MX6SX_PAD_KEY_ROW1__GPIO2_IO_16	0x13059>,
++			<MX6SX_PAD_SD3_DATA0__USDHC3_DATA0	0x17069>,
++			<MX6SX_PAD_SD3_DATA1__USDHC3_DATA1	0x17069>,
++			<MX6SX_PAD_SD3_DATA2__USDHC3_DATA2	0x17069>,
++			<MX6SX_PAD_SD3_DATA3__USDHC3_DATA3	0x17069>,
++			<MX6SX_PAD_SD3_CMD__USDHC3_CMD		0x17069>,
++			<MX6SX_PAD_SD3_CLK__USDHC3_CLK		0x10069>,
++			<MX6SX_PAD_CSI_MCLK__OSC32K_32K_OUT	0x10059>;
++	};
 +};
 +
 +&uart1 {
@@ -555,7 +669,7 @@ index 0000000..20f11c9
 +	status = "disabled";
 +};
 +
-+&uart3 { /* for bluetooth */
++&uart3 { /* Bluetooth */
 +	pinctrl-names = "default";
 +	pinctrl-0 = <&pinctrl_uart3>;
 +	fsl,uart-has-rtscts;
@@ -576,6 +690,21 @@ index 0000000..20f11c9
 +	status = "disabled";
 +};
 +
++&usbotg1 { /* J2 micro USB port */
++	vbus-supply = <&reg_usb_otg1_vbus>;
++	pinctrl-names = "default";
++	pinctrl-0 = <&pinctrl_usb_otg1>;
++	status = "okay";
++};
++
++&usbotg2 { /* J3 host USB port */
++	vbus-supply = <&reg_usb_otg2_vbus>;
++	pinctrl-names = "default";
++	pinctrl-0 = <&pinctrl_usb_otg2>;
++	dr_mode = "host";
++	status = "okay";
++};
++
 +&usdhc2 {
 +	pinctrl-names = "default";
 +	pinctrl-0 = <&pinctrl_usdhc2>;
@@ -588,18 +717,19 @@ index 0000000..20f11c9
 +	status = "okay";
 +};
 +
-+&usdhc3 { /* WiFi */
++&usdhc3 { /* Wi-Fi */
 +	pinctrl-names = "default";
-+	pinctrl-0 = <&pinctrl_usdhc3_wifi>;
-+	enable-sdio-wakeup;
-+	non-removable;	// non-removable is not a variable, the fact it is listed is all that is used by driver
-+	vmmc-supply = <&wlan_en_reg>;
++	pinctrl-0 = <&pinctrl_usdhc3>;
++	non-removable;
++	vmmc-supply = <&reg_wlan>;
 +	cap-power-off-card;
++	wakeup-source;
 +	keep-power-in-suspend;
-+	status = "okay";
 +	#address-cells = <1>;
 +	#size-cells = <0>;
-+	wlcore: wlcore@0 {
++	status = "okay";
++
++	wlcore: wlcore@2 {
 +		compatible = "ti,wl1831";
 +		reg = <2>;
 +		interrupt-parent = <&gpio2>;
