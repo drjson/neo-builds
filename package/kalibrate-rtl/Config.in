@@ -1,0 +1,8 @@
+config BR2_PACKAGE_KALIBRATE_RTL
+    bool 'kalibrate-rtl'
+    select BR2_PACKAGE_FFTW
+    depends on BR2_PACKAGE_LIBRTLSDR
+    depends on BR2_TOOLCHAIN_HAS_THREADS
+    help
+        Calibration program for RTL2832U SDR Dongles using GSM timing correction.
+        https://github.com/steve-m/kalibrate-rtl

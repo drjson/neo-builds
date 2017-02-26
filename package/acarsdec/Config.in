@@ -1,0 +1,8 @@
+config BR2_PACKAGE_ACARSDEC
+    bool 'acarsdec'
+    select BR2_PACKAGE_SQLITE
+    depends on BR2_PACKAGE_LIBRTLSDR
+    depends on BR2_TOOLCHAIN_HAS_THREADS
+    help
+        ACARS Decoder and Server designed for RTLSDR devices.
+        https://github.com/TLeconte/acarsdec

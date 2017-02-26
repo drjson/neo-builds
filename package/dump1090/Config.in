@@ -1,0 +1,6 @@
+config BR2_PACKAGE_DUMP1090
+    bool 'dump1090'
+    depends on BR2_PACKAGE_LIBRTLSDR
+    help
+        Mode S decoder designed for RTLSDR devices.
+        https://github.com/MalcolmRobb/dump1090
