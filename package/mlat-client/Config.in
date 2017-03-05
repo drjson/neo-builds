@@ -1,0 +1,7 @@
+config BR2_PACKAGE_MLAT_CLIENT
+    bool 'mlat-client'
+    select BR2_PACKAGE_PYTHON3
+    help
+        MLAT client for performing multilateration calculations from
+        dump1090 outputs.
+        https://github.com/mutability/mlat-client

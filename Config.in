@@ -1,4 +1,5 @@
 source "$BR2_EXTERNAL_NEO_BLD_PATH/package/dump1090/Config.in"
 source "$BR2_EXTERNAL_NEO_BLD_PATH/package/kalibrate-rtl/Config.in"
 source "$BR2_EXTERNAL_NEO_BLD_PATH/package/acarsdec/Config.in"
+source "$BR2_EXTERNAL_NEO_BLD_PATH/package/mlat-client/Config.in"
 
