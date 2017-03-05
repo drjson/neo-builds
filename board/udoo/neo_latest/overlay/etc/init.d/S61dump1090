@@ -8,7 +8,7 @@ NAME=dump1090
 PIDFILE=/var/run/$NAME.pid
 #This is the command to be run, give the full pathname
 DAEMON=/usr/bin/dump1090
-DAEMON_OPTS="--ppm -52 --fix --net --aggressive --enable-agc --phase-enhance --quiet"
+DAEMON_OPTS="--fix --net --aggressive --enable-agc --phase-enhance --quiet"
 
 
 export PATH="${PATH:+$PATH:}/usr/sbin:/sbin"
