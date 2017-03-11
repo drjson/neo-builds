@@ -4,12 +4,11 @@
 set -e
 
 # Must be a valid filename
-NAME=dump1090
+NAME=vrs
 PIDFILE=/var/run/$NAME.pid
 #This is the command to be run, give the full pathname
-DAEMON=/usr/bin/dump1090
-DAEMON_OPTS="--fix --net --net-http-port 8081 --aggressive --enable-agc --phase-enhance --quiet"
-
+DAEMON=/usr/bin/mono
+DAEMON_OPTS="/opt/virtualradar/VirtualRadar.exe -nogui"
 
 export PATH="${PATH:+$PATH:}/usr/sbin:/sbin"
 
