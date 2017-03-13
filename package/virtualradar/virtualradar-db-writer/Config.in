@@ -1,0 +1,5 @@
+config BR2_PACKAGE_VIRTUALRADAR_DB_WRITER
+    bool 'DB Writer Plugin'
+    help
+        Provides ability to write database for VRS.
+        http://virtualradarserver.co.uk

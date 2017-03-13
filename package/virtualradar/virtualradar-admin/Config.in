@@ -1,0 +1,5 @@
+config BR2_PACKAGE_VIRTUALRADAR_ADMIN
+    bool 'Web Admin Plugin'
+    help
+        Provides web interface for configuring VRS.
+        http://virtualradarserver.co.uk

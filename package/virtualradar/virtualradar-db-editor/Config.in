@@ -1,0 +1,5 @@
+config BR2_PACKAGE_VIRTUALRADAR_DB_EDITOR
+    bool 'DB Editor Plugin'
+    help
+        Provides ability to edit database for VRS.
+        http://virtualradarserver.co.uk

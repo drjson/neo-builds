@@ -1,0 +1,5 @@
+config BR2_PACKAGE_VIRTUALRADAR_CUSTOM_CONTENT
+    bool 'Custom Content Plugin'
+    help
+        Provides ability to edit webpage contents for VRS.
+        http://virtualradarserver.co.uk

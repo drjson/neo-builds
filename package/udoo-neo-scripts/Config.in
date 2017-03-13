@@ -1,0 +1,28 @@
+config BR2_PACKAGE_UDOO_NEO_SCRIPTS
+    bool 'udoo neo scripts'
+    help
+        Scripts for testing and setting up the Udoo Neo board.
+
+if BR2_PACKAGE_UDOO_NEO_SCRIPTS
+
+config BR2_PACKAGE_UDOO_NEO_TEST_SCRIPTS
+    bool 'test scripts'
+    depends on BR2_PACKAGE_BASH
+    help
+        Perform self test of UDOO board from userspace.
+
+comment "test scripts require bash"
+    depends on !BR2_PACKAGE_BASH
+
+config BR2_PACKAGE_UDOO_NEO_RESIZE_ROOTFS
+    bool 'resize rootfs'
+    depends on BR2_PACKAGE_E2FSPROGS_RESIZE2FS
+    depends on BR2_INIT_SYSV || BR2_INIT_BUSYBOX
+    help
+        On first boot, will resize image to use all available space.
+
+comment "resize rootfs requires resize2fs"
+    depends on !BR2_PACKAGE_E2FSPROGS_RESIZE2FS
+    depends on BR2_INIT_SYSV || BR2_INIT_BUSYBOX
+
+endif

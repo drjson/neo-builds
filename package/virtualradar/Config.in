@@ -1,0 +1,18 @@
+source "$BR2_EXTERNAL_NEO_BLD_PATH/package/virtualradar/virtualradar/Config.in"
+
+if BR2_PACKAGE_VIRTUALRADAR
+config BR2_PACKAGE_VIRTUALRADAR_SERVICE
+    bool 'run as service'
+    depends on BR2_INIT_SYSV || BR2_INIT_BUSYBOX
+    help
+        Starts VRS on startup in headless mode. Note, you will need to
+        configure the Admin interface manually once via CLI.
+
+source "$BR2_EXTERNAL_NEO_BLD_PATH/package/virtualradar/virtualradar-admin/Config.in"
+source "$BR2_EXTERNAL_NEO_BLD_PATH/package/virtualradar/virtualradar-db-writer/Config.in"
+source "$BR2_EXTERNAL_NEO_BLD_PATH/package/virtualradar/virtualradar-db-editor/Config.in"
+source "$BR2_EXTERNAL_NEO_BLD_PATH/package/virtualradar/virtualradar-custom-content/Config.in"
+endif
+
+comment "Virtual Radar requires Mono and libgdiplus"
+    depends on !BR2_PACKAGE_MONO || !BR2_PACKAGE_LIBGDIPLUS

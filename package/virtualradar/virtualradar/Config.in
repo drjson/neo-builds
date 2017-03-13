@@ -1,0 +1,9 @@
+config BR2_PACKAGE_VIRTUALRADAR
+    bool 'vrs'
+    depends on BR2_PACKAGE_MONO
+    depends on BR2_PACKAGE_LIBGDIPLUS
+    help
+        Virtual Radar Server package. Executes using the Mono package.
+        Integrates with dump1090 and/or MLAT to serve up ADS-B Map.
+        http://virtualradarserver.co.uk
+
