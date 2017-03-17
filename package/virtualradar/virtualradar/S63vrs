@@ -16,7 +16,7 @@ case "$1" in
   start)
         echo -n "Starting daemon: "$NAME
         start-stop-daemon --start --quiet --make-pidfile --pidfile $PIDFILE --background \
-            --startas /bin/sh -- -c "exec $DAEMON $DAEMON_OPTS > /var/log/$NAME.log 2>&1"
+            --startas /bin/sh -- -c "cd /root && exec $DAEMON $DAEMON_OPTS > /var/log/$NAME.log 2>&1"
         echo "."
 	;;
   stop)
@@ -28,7 +28,7 @@ case "$1" in
         echo -n "Restarting daemon: "$NAME
 	start-stop-daemon --stop --quiet --oknodo --retry 30 --pidfile $PIDFILE
         start-stop-daemon --start --quiet --make-pidfile --pidfile $PIDFILE --background \
-            --startas /bin/sh -- -c "exec $DAEMON $DAEMON_OPTS > /var/log/$NAME.log 2>&1"
+            --startas /bin/sh -- -c "cd /root && exec $DAEMON $DAEMON_OPTS > /var/log/$NAME.log 2>&1"
 	echo "."
 	;;
 
